@@ -1,0 +1,26 @@
+{
+  "name": "chatapp-backend",
+  "version": "1.0.0",
+  "description": "ChatApp backend — Express + Socket.IO",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "jsonwebtoken": "^9.0.3",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-jwt": "^4.0.1",
+    "socket.io": "^4.8.3",
+    "sql.js": "^1.14.1",
+    "uuid": "^14.0.1"
+  }
+}
