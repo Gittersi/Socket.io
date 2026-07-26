@@ -2,7 +2,7 @@ import { Router }   from 'express'
 import bcrypt        from 'bcryptjs'
 import passport      from '../lib/passport.js'
 import {
-  findByUsername, findByEmail, createLocalUser, safeUser
+  findByUsername, findByEmail, createLocalUser, safeUser, updateTwoFactor
 } from '../lib/userRepository.js'
 import {
   generateAccessToken, generateRefreshToken,
@@ -146,5 +146,38 @@ router.get('/google/callback',
     res.redirect(`${CLIENT_ORIGIN}/auth/callback?token=${accessToken}`)
   }
 )
+
+// ─── 2FA Setup & Verification ────────────────────────────────────────────────
+router.post('/2fa/setup', passport.authenticate('jwt', { session: false }), (req, res) => {
+  const secret = '2FA_' + Math.random().toString(36).substring(2, 10).toUpperCase()
+  res.json({ secret, qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=otpauth://totp/ChatApp:${req.user.username}?secret=${secret}` })
+})
+
+router.post('/2fa/verify', passport.authenticate('jwt', { session: false }), (req, res) => {
+  const { secret, code } = req.body
+  if (!code || code.length !== 6) return res.status(400).json({ error: 'Code must be 6 digits.' })
+  updateTwoFactor(req.user.id, { enabled: true, secret })
+  res.json({ ok: true, message: '2FA enabled successfully' })
+})
+
+router.post('/2fa/disable', passport.authenticate('jwt', { session: false }), (req, res) => {
+  updateTwoFactor(req.user.id, { enabled: false, secret: null })
+  res.json({ ok: true, message: '2FA disabled successfully' })
+})
+
+// ─── Content Moderation Report & Admin Panel ──────────────────────────────────
+router.post('/report', passport.authenticate('jwt', { session: false }), (req, res) => {
+  const { msgId, roomId, reason, msgText, username } = req.body
+  import('../lib/moderation.js').then(({ reportMessage }) => {
+    const report = reportMessage({ msgId, roomId, reportedBy: req.user.username, reason, msgText, username })
+    res.json({ ok: true, report })
+  })
+})
+
+router.get('/admin/reports', passport.authenticate('jwt', { session: false }), (req, res) => {
+  import('../lib/moderation.js').then(({ reportedMessages }) => {
+    res.json({ reports: reportedMessages })
+  })
+})
 
 export default router

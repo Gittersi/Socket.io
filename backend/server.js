@@ -11,6 +11,7 @@ import { verifyAccessToken } from './lib/jwt.js'
 import { cleanExpiredTokens } from './lib/jwt.js'
 import { initBroadcast, broadcastLobby } from './lib/broadcast.js'
 import { registerChatHandlers }          from './sockets/chat.js'
+import { registerCallHandlers }          from './sockets/call.js'
 import { users }      from './lib/store.js'
 
 import authRoutes     from './routes/auth.js'
@@ -72,6 +73,7 @@ io.on('connection', (socket) => {
   console.log(`[socket] + ${user.username} (${socket.id})`)
 
   registerChatHandlers(io, socket)
+  registerCallHandlers(io, socket)
 
   // Track online users (keyed by socketId to handle multiple tabs)
   users.set(socket.id, user)

@@ -54,7 +54,8 @@ export const useChatStore = create((set, get) => ({
       const prev = new Set(s.typingUsers[roomId] ?? [])
       if (isTyping) prev.add(username)
       else prev.delete(username)
-      return { typingUsers: { ...s.typingUsers, [roomId]: prev } }
+      // Store as array so React can render it
+      return { typingUsers: { ...s.typingUsers, [roomId]: [...prev] } }
     }),
 
   updateReactions: (roomId, msgId, reactions) =>

@@ -1,20 +1,15 @@
 // ─── In-memory data stores ────────────────────────────────────────────────────
-// In production you'd swap these for a real DB (MongoDB, PostgreSQL, etc.)
 
-export const users = new Map()      // sessionId  -> { id, username, color, joinedAt }
-export const rooms = new Map()      // roomId     -> Room object
-export const sockets = new Map()    // socketId   -> { userId, roomId }
+export const users   = new Map()   // socketId  -> { id, username, color, bio, status, lastSeen, mutedRooms }
+export const rooms   = new Map()   // roomId    -> Room object
+export const sockets = new Map()   // socketId  -> { userId, roomId }
+export const onlineUserIds = new Set() // Set of userIds currently connected
 
 /**
- * @typedef {Object} Room
- * @property {string}  id
- * @property {string}  name
- * @property {'group'|'dm'} type
- * @property {string}  [dmKey]
- * @property {string}  createdBy   username for group, userId for dm
- * @property {Set}     members     Set of userIds currently in room
- * @property {Array}   messages    last 300 messages
- * @property {Object}  [pinnedMsg] { id, text, username }
+ * Room shape:
+ * { id, name, type, dmKey?, createdBy, inviteCode,
+ *   members: Set<userId>, memberRoles: Map<userId,'admin'|'member'>,
+ *   messages: [], pinnedMsg?, description, isPrivate, mutedBy: Set<userId> }
  */
 
 export function roomPublicData(room) {
@@ -24,19 +19,23 @@ export function roomPublicData(room) {
     type:        room.type,
     createdBy:   room.createdBy,
     memberCount: room.members.size,
-    lastMsg:     room.messages.at(-1) ?? null,
+    lastMsg:     room.messages.at(-1) ? serializeMsg(room.messages.at(-1)) : null,
     pinnedMsg:   room.pinnedMsg ?? null,
+    description: room.description ?? '',
+    isPrivate:   room.isPrivate ?? false,
+    inviteCode:  room.inviteCode ?? null,
   }
 }
 
 export function serializeMsg(msg) {
-  return { ...msg, reactions: serializeReactions(msg.reactions) }
+  if (!msg) return null
+  return { ...msg, reactions: serializeReactions(msg.reactions ?? {}) }
 }
 
 export function serializeReactions(reactions) {
   const out = {}
   for (const [emoji, set] of Object.entries(reactions)) {
-    out[emoji] = [...set]
+    out[emoji] = set instanceof Set ? [...set] : set
   }
   return out
 }

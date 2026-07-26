@@ -34,18 +34,37 @@ export async function initDB() {
   // Create tables
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
-      id          TEXT PRIMARY KEY,
-      username    TEXT UNIQUE NOT NULL,
-      email       TEXT UNIQUE,
-      password    TEXT,
-      color       TEXT NOT NULL,
-      avatar      TEXT,
-      provider    TEXT NOT NULL DEFAULT 'local',
-      google_id   TEXT UNIQUE,
-      created_at  INTEGER NOT NULL,
-      updated_at  INTEGER NOT NULL
+      id                   TEXT PRIMARY KEY,
+      username             TEXT UNIQUE NOT NULL,
+      email                TEXT UNIQUE,
+      password             TEXT,
+      color                TEXT NOT NULL,
+      avatar               TEXT,
+      bio                  TEXT,
+      status_text          TEXT,
+      privacy_last_seen    TEXT NOT NULL DEFAULT 'everyone',
+      privacy_profile      TEXT NOT NULL DEFAULT 'everyone',
+      read_receipts_enabled INTEGER NOT NULL DEFAULT 1,
+      two_factor_enabled   INTEGER NOT NULL DEFAULT 0,
+      two_factor_secret    TEXT,
+      role                 TEXT NOT NULL DEFAULT 'user',
+      provider             TEXT NOT NULL DEFAULT 'local',
+      google_id            TEXT UNIQUE,
+      last_seen            INTEGER,
+      created_at           INTEGER NOT NULL,
+      updated_at           INTEGER NOT NULL
     )
   `)
+  // Add new columns if upgrading from old DB
+  try { db.run(`ALTER TABLE users ADD COLUMN bio TEXT`) } catch(_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN status_text TEXT`) } catch(_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN last_seen INTEGER`) } catch(_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN privacy_last_seen TEXT NOT NULL DEFAULT 'everyone'`) } catch(_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN privacy_profile TEXT NOT NULL DEFAULT 'everyone'`) } catch(_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN read_receipts_enabled INTEGER NOT NULL DEFAULT 1`) } catch(_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN two_factor_enabled INTEGER NOT NULL DEFAULT 0`) } catch(_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN two_factor_secret TEXT`) } catch(_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'`) } catch(_) {}
 
   db.run(`
     CREATE TABLE IF NOT EXISTS refresh_tokens (
