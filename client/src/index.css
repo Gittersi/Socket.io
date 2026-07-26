@@ -6,10 +6,112 @@
     overflow: hidden;
   }
   body {
-    @apply bg-[#0a0a0f] text-[#e2e2f0] font-sans antialiased;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   * { box-sizing: border-box; }
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { @apply bg-white/10 rounded-full; }
+  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 9999px; }
+}
+
+/* Glassmorphism Keyframe Animation */
+@keyframes meshGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 1. GLASSMORPHISM THEME */
+.theme-glass {
+  background: linear-gradient(-45deg, #0f172a, #1e1b4b, #311042, #020617);
+  background-size: 400% 400%;
+  animation: meshGradient 18s ease infinite;
+  color: #ffffff;
+}
+
+.theme-glass header,
+.theme-glass aside,
+.theme-glass main {
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.theme-glass input,
+.theme-glass textarea {
+  background: rgba(255, 255, 255, 0.07) !important;
+  backdrop-filter: blur(12px) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: white !important;
+}
+
+/* 2. LIGHT MODE THEME */
+.theme-light {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.theme-light header,
+.theme-light aside {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.theme-light main {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.theme-light input,
+.theme-light textarea {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.theme-light input::placeholder,
+.theme-light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.theme-light .text-white {
+  color: #0f172a !important;
+}
+
+.theme-light .text-white\/90 { color: #1e293b !important; }
+.theme-light .text-white\/80 { color: #334155 !important; }
+.theme-light .text-white\/70 { color: #475569 !important; }
+.theme-light .text-white\/60,
+.theme-light .text-white\/50,
+.theme-light .text-white\/40 { color: #64748b !important; }
+.theme-light .text-white\/30,
+.theme-light .text-white\/25,
+.theme-light .text-white\/20 { color: #94a3b8 !important; }
+
+.theme-light .bg-\[\#13131a\],
+.theme-light .bg-\[\#1a1a24\],
+.theme-light .bg-\[\#0a0a0f\] {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.theme-light .bg-\[\#1e1e2e\] {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.theme-light .border-white\/5,
+.theme-light .border-white\/8,
+.theme-light .border-white\/10 {
+  border-color: #e2e8f0 !important;
+}
+
+/* 3. DARK MODE THEME */
+.theme-dark {
+  background: #0a0a0f;
+  color: #e2e2f0;
 }

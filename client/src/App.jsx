@@ -8,6 +8,8 @@ import LobbyPage    from './pages/LobbyPage'
 import ChatPage     from './pages/ChatPage'
 import AuthCallback from './pages/AuthCallback'
 
+import { useThemeStore } from './store/useThemeStore'
+
 function PrivateRoute({ children }) {
   const { user, accessToken } = useAuthStore()
   if (!user || !accessToken) return <Navigate to="/login" replace />
@@ -23,9 +25,10 @@ function GuestRoute({ children }) {
 export default function App() {
   // Connect socket for authenticated users
   useSocket()
+  const theme = useThemeStore((s) => s.theme)
 
   return (
-    <div className="h-full">
+    <div className={`h-full theme-${theme} transition-all duration-300`}>
       <Routes>
         <Route path="/login"    element={<GuestRoute><LoginPage /></GuestRoute>} />
         <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />

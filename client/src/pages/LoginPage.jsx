@@ -6,7 +6,11 @@ import { api } from '../lib/api'
 export default function LoginPage() {
   const [params]  = useSearchParams()
   const [form, setForm]   = useState({ username: '', password: '' })
-  const [error, setError] = useState(params.get('error') === 'google' ? 'Google sign-in failed. Try again.' : '')
+  const errorParam = params.get('error')
+  const [error, setError] = useState(
+    errorParam === 'google' ? 'Google sign-in failed. Try again.' :
+    errorParam === 'google_not_configured' ? 'Google sign-in is not configured on the server.' : ''
+  )
   const [loading, setLoading] = useState(false)
   const setAuth  = useAuthStore((s) => s.setAuth)
   const navigate = useNavigate()
@@ -53,8 +57,8 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Google OAuth */}
-          <a href="/api/auth/google"
+          {/* Google OAuth — must hit backend directly for redirect to work */}
+          <a href="http://localhost:3000/api/auth/google"
             className="flex items-center justify-center gap-3 w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold rounded-xl py-3 text-[14px] transition mb-5">
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

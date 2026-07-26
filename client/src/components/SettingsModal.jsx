@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
+import { useThemeStore } from '../store/useThemeStore'
 
 export default function SettingsModal({ onClose }) {
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [pushEnabled, setPushEnabled] = useState(false)
-  const [theme, setTheme] = useState('dark') // 'dark' | 'glass' | 'light'
+  const { theme, setTheme } = useThemeStore()
   const [lowData, setLowData] = useState(false)
 
   const handleRequestPush = async () => {

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore'
 import { useChatStore } from '../store/useChatStore'
+import { useThemeStore } from '../store/useThemeStore'
 import socket from '../lib/socket'
 import Avatar from '../components/Avatar'
 import { colorFor } from '../lib/colors'
@@ -16,6 +17,7 @@ export default function LobbyPage() {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const { rooms, onlineUsers, unread } = useChatStore()
+  const { theme, setTheme } = useThemeStore()
   const navigate = useNavigate()
 
   const [activeTab, setActiveTab] = useState('all') // 'all' | 'dms' | 'groups' | 'channels' | 'unread'
@@ -94,6 +96,11 @@ export default function LobbyPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button onClick={() => setTheme(theme === 'dark' ? 'glass' : theme === 'glass' ? 'light' : 'dark')}
+            title="Switch Theme (Dark / Glassmorphism / Light)"
+            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-white/5 border border-white/10 hover:border-white/20 transition font-medium">
+            <span>{theme === 'glass' ? '💎 Glass' : theme === 'light' ? '☀️ Light' : '🌙 Dark'}</span>
+          </button>
           <button onClick={() => setShowAdminModal(true)} title="Admin Moderation"
             className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/5 transition text-base">
             🛡️

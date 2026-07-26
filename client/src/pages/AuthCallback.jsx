@@ -1,31 +1,62 @@
 /**
- * Google OAuth lands here: /auth/callback?token=<accessToken>
- * We grab the token, fetch the user profile, store both, then redirect to lobby.
+ * Google OAuth lands here: /auth/callback#data=<base64url-encoded JSON>
+ * We parse the token + user from the URL fragment, store them, set the
+ * refresh token cookie via API, then redirect to lobby.
  */
 import { useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore'
 
 export default function AuthCallback() {
-  const [params]  = useSearchParams()
-  const setAuth   = useAuthStore((s) => s.setAuth)
-  const navigate  = useNavigate()
+  const setAuth  = useAuthStore((s) => s.setAuth)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    const token = params.get('token')
-    if (!token) { navigate('/login'); return }
+    try {
+      // Parse the fragment: #data=<base64url>
+      const hash = window.location.hash.slice(1) // remove '#'
+      const params = new URLSearchParams(hash)
+      const encoded = params.get('data')
 
-    // Fetch user profile with the token
-    fetch('/api/auth/me', {
-      headers: { Authorization: `Bearer ${token}` },
-      credentials: 'include',
-    })
-      .then((r) => r.json())
-      .then(({ user }) => {
-        setAuth(user, token)
-        navigate('/', { replace: true })
+      if (!encoded) {
+        console.error('[AuthCallback] No data in URL fragment')
+        navigate('/login?error=google', { replace: true })
+        return
+      }
+
+      // Decode base64url → JSON
+      const json = atob(encoded.replace(/-/g, '+').replace(/_/g, '/'))
+      const { accessToken, refreshToken, user } = JSON.parse(json)
+
+      if (!accessToken || !user) {
+        console.error('[AuthCallback] Missing token or user in payload')
+        navigate('/login?error=google', { replace: true })
+        return
+      }
+
+      // Store in Zustand
+      setAuth(user, accessToken)
+
+      // Set the refresh token as an httpOnly cookie via the backend
+      // We POST the refresh token to a special endpoint that sets the cookie
+      fetch('/api/auth/set-refresh-cookie', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      }).catch((err) => {
+        console.warn('[AuthCallback] Failed to set refresh cookie:', err)
       })
-      .catch(() => navigate('/login'))
+
+      // Clear the hash from the URL (tokens shouldn't linger in browser history)
+      window.history.replaceState(null, '', '/auth/callback')
+
+      // Navigate to lobby
+      navigate('/', { replace: true })
+    } catch (err) {
+      console.error('[AuthCallback] Error parsing OAuth data:', err)
+      navigate('/login?error=google', { replace: true })
+    }
   }, [])
 
   return (

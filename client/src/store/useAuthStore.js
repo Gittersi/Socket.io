@@ -20,8 +20,8 @@ export const useAuthStore = create(
     }),
     {
       name: 'chat-auth',
-      // Only persist user profile, NOT the access token (it's short-lived)
-      partialize: (state) => ({ user: state.user }),
+      // Persist both user and accessToken so Google OAuth redirect doesn't lose state
+      partialize: (state) => ({ user: state.user, accessToken: state.accessToken }),
     }
   )
 )

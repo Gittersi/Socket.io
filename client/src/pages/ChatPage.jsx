@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore'
 import { useChatStore } from '../store/useChatStore'
+import { useThemeStore } from '../store/useThemeStore'
 import socket from '../lib/socket'
 import Avatar from '../components/Avatar'
 import MarkdownText from '../components/MarkdownText'
@@ -19,6 +20,7 @@ export default function ChatPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const { rooms, messages, typingUsers, setCurrentRoom } = useChatStore()
+  const { theme, setTheme } = useThemeStore()
 
   const room = rooms.find((r) => r.id === roomId)
   const msgs = messages[roomId] ?? []
@@ -237,6 +239,11 @@ export default function ChatPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button onClick={() => setTheme(theme === 'dark' ? 'glass' : theme === 'glass' ? 'light' : 'dark')}
+            title="Switch Theme (Dark / Glassmorphism / Light)"
+            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-white/5 border border-white/10 hover:border-white/20 transition font-medium mr-1">
+            <span>{theme === 'glass' ? '💎 Glass' : theme === 'light' ? '☀️ Light' : '🌙 Dark'}</span>
+          </button>
           {/* Call Buttons */}
           <button onClick={() => handleStartCall(false)} title="Start Voice Call"
             className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition text-base">
