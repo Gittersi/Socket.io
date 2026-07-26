@@ -10,7 +10,7 @@ import {
 } from '../lib/jwt.js'
 
 const router = Router()
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173'
+const CLIENT_ORIGIN = (process.env.CLIENT_ORIGIN || 'http://localhost:5173').replace(/\/$/, '')
 
 // ─── Helper: send both tokens ─────────────────────────────────────────────────
 function sendTokens(res, user) {
