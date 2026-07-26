@@ -18,6 +18,9 @@ pids
 *.pid
 *.seed
 *.pid.lock
+backend/data/
+*.sqlite
+*.db
 
 # Coverage
 coverage/

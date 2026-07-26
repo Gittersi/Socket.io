@@ -1,0 +1,11 @@
+{
+  "name": "chatapp",
+  "version": "1.0.0",
+  "description": "End-to-End Real-Time Chat Application",
+  "private": true,
+  "scripts": {
+    "build": "cd client && npm install && npm run build && cd ../backend && npm install",
+    "start": "cd backend && node server.js",
+    "render:build": "cd client && npm install && npm run build && cd ../backend && npm install"
+  }
+}

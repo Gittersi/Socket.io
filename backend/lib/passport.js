@@ -1,7 +1,7 @@
 import passport        from 'passport'
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt'
 import { Strategy as GoogleStrategy }          from 'passport-google-oauth20'
-import { findById, findByGoogleId, createGoogleUser, updateGoogleUser, safeUser } from './userRepository.js'
+import { findById, findByUsername, findByGoogleId, createGoogleUser, updateGoogleUser, safeUser } from './userRepository.js'
 
 const ACCESS_SECRET   = process.env.JWT_ACCESS_SECRET  || 'access-secret-change-in-prod'
 const GOOGLE_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID     || ''
@@ -21,17 +21,26 @@ passport.use('jwt', new JwtStrategy(
   }
 ))
 
+const CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL
+  || `http://localhost:${process.env.PORT || 3000}/api/auth/google/callback`
+
 // ── Google OAuth Strategy ─────────────────────────────────────────────────────
 if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
   passport.use('google', new GoogleStrategy(
     {
       clientID:     GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
-      callbackURL:  `http://localhost:${process.env.PORT || 3000}/api/auth/google/callback`,
+      callbackURL:  CALLBACK_URL,
       scope:        ['profile', 'email'],
     },
     (_accessToken, _refreshToken, profile, done) => {
       try {
+        console.log('[google-oauth] Profile received:', {
+          id: profile.id,
+          displayName: profile.displayName,
+          email: profile.emails?.[0]?.value,
+        })
+
         const email    = profile.emails?.[0]?.value
         const avatar   = profile.photos?.[0]?.value
         const googleId = profile.id
@@ -40,6 +49,7 @@ if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
         let user = findByGoogleId(googleId)
 
         if (user) {
+          console.log('[google-oauth] Existing user found:', user.username)
           // Update avatar/email in case they changed
           user = updateGoogleUser(user.id, { avatar, email })
         } else {
@@ -49,11 +59,19 @@ if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
             .replace(/\s+/g, '_')
             .slice(0, 18)
 
+          // Handle duplicate usernames by appending random suffix
+          if (findByUsername(base)) {
+            base = base.slice(0, 14) + '_' + Math.random().toString(36).slice(2, 6)
+          }
+
+          console.log('[google-oauth] Creating new user:', base)
           user = createGoogleUser({ googleId, username: base, email, avatar })
         }
 
+        console.log('[google-oauth] Auth success for:', user.username)
         done(null, safeUser(user))
       } catch (err) {
+        console.error('[google-oauth] Strategy error:', err)
         done(err)
       }
     }
@@ -63,3 +81,4 @@ if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
 }
 
 export default passport
+

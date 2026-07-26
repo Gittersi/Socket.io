@@ -1,6 +1,8 @@
 import 'dotenv/config'
 import express        from 'express'
 import http           from 'http'
+import path           from 'path'
+import { fileURLToPath } from 'url'
 import { Server }     from 'socket.io'
 import cors           from 'cors'
 import cookieParser   from 'cookie-parser'
@@ -19,6 +21,8 @@ import roomRoutes     from './routes/rooms.js'
 
 const PORT          = process.env.PORT          || 3000
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173'
+const __dirname     = path.dirname(fileURLToPath(import.meta.url))
+const IS_PROD       = process.env.NODE_ENV === 'production'
 
 // ─── Init DB first ────────────────────────────────────────────────────────────
 await initDB()
@@ -47,6 +51,16 @@ app.use(passport.initialize())
 app.use('/api/auth',  authRoutes)
 app.use('/api/rooms', roomRoutes)
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', ts: Date.now() }))
+
+// ─── Serve React frontend in production ───────────────────────────────────────
+if (IS_PROD) {
+  const clientDist = path.join(__dirname, '..', 'client', 'dist')
+  app.use(express.static(clientDist))
+  // SPA fallback: any non-API route serves index.html
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'))
+  })
+}
 
 // ─── Socket.IO JWT auth middleware ────────────────────────────────────────────
 io.use((socket, next) => {

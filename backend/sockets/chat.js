@@ -245,7 +245,7 @@ export function registerChatHandlers(io, socket) {
   socket.on('leaveRoom', ({ roomId }) => leaveRoom(roomId))
   socket.on('disconnect', () => {
     if (currentRoom) leaveRoom(currentRoom)
-    updateLastSeen(currentUser.id).catch(() => {})
+    try { updateLastSeen(currentUser.id) } catch (_) {}
   })
 
   function leaveRoom(roomId) {

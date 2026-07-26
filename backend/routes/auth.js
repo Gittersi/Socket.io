@@ -122,30 +122,54 @@ router.get('/me', passport.authenticate('jwt', { session: false }), (req, res) =
   res.json({ user: req.user })
 })
 
+// ─── Set refresh token cookie (used after Google OAuth redirect) ──────────────
+// The Google OAuth flow passes the refresh token in the URL fragment to the client.
+// The client then POSTs it here (via the Vite proxy) so it's set as an httpOnly cookie
+// on the correct origin.
+router.post('/set-refresh-cookie', (req, res) => {
+  const { refreshToken } = req.body
+  if (!refreshToken) return res.status(400).json({ error: 'Missing refreshToken' })
+
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure:   process.env.NODE_ENV === 'production',
+    maxAge:   7 * 24 * 60 * 60 * 1000,  // 7 days
+  })
+  res.json({ ok: true })
+})
+
 // ─── Google OAuth ─────────────────────────────────────────────────────────────
-router.get('/google',
-  passport.authenticate('google', { session: false, scope: ['profile', 'email'] })
-)
-
-router.get('/google/callback',
-  passport.authenticate('google', { session: false, failureRedirect: `${CLIENT_ORIGIN}/login?error=google` }),
-  (req, res) => {
-    // Issue tokens and redirect to frontend with access token in URL
-    // (frontend reads it once and stores it, then clears from URL)
-    const accessToken = generateAccessToken(req.user)
-    generateRefreshToken(req.user.id)  // sets httpOnly cookie via sendTokens
-
-    res.cookie('refreshToken', generateRefreshToken(req.user.id), {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure:   process.env.NODE_ENV === 'production',
-      maxAge:   7 * 24 * 60 * 60 * 1000,
-    })
-
-    // Redirect to frontend — token in query param (short-lived, frontend stores it immediately)
-    res.redirect(`${CLIENT_ORIGIN}/auth/callback?token=${accessToken}`)
+router.get('/google', (req, res, next) => {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return res.redirect(`${CLIENT_ORIGIN}/login?error=google_not_configured`)
   }
-)
+  passport.authenticate('google', { session: false, scope: ['profile', 'email'] })(req, res, next)
+})
+
+router.get('/google/callback', (req, res, next) => {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return res.redirect(`${CLIENT_ORIGIN}/login?error=google_not_configured`)
+  }
+  passport.authenticate('google', { session: false, failureRedirect: `${CLIENT_ORIGIN}/login?error=google` }, (err, user) => {
+    if (err || !user) {
+      console.error('[auth] Google OAuth callback error:', err)
+      return res.redirect(`${CLIENT_ORIGIN}/login?error=google`)
+    }
+    const accessToken  = generateAccessToken(user)
+    const refreshToken = generateRefreshToken(user.id)
+
+    // Encode user + tokens as base64 so the client can parse them from the URL fragment
+    const payload = Buffer.from(JSON.stringify({
+      accessToken,
+      refreshToken,
+      user: safeUser(user),
+    })).toString('base64url')
+
+    // Use URL fragment (#) — it's never sent to the server, so it's safer than query params
+    res.redirect(`${CLIENT_ORIGIN}/auth/callback#data=${payload}`)
+  })(req, res, next)
+})
 
 // ─── 2FA Setup & Verification ────────────────────────────────────────────────
 router.post('/2fa/setup', passport.authenticate('jwt', { session: false }), (req, res) => {

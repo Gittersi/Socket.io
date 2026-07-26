@@ -17,15 +17,28 @@ export function generateAccessToken(user) {
 }
 
 export function generateRefreshToken(userId) {
-  const token    = jwt.sign({ sub: userId }, REFRESH_SECRET, { expiresIn: REFRESH_TTL })
+  // Include a unique jti to ensure no two tokens are ever identical
+  const jti      = uuid()
+  const token    = jwt.sign({ sub: userId, jti }, REFRESH_SECRET, { expiresIn: REFRESH_TTL })
   const decoded  = jwt.decode(token)
   const db       = getDB()
 
-  db.run(
-    `INSERT INTO refresh_tokens (id, user_id, token, expires_at, created_at)
-     VALUES (?, ?, ?, ?, ?)`,
-    [uuid(), userId, token, decoded.exp * 1000, Date.now()]
-  )
+  // Remove any existing token that collides (shouldn't happen with jti, but safety net)
+  try {
+    db.run(
+      `INSERT INTO refresh_tokens (id, user_id, token, expires_at, created_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [jti, userId, token, decoded.exp * 1000, Date.now()]
+    )
+  } catch (err) {
+    // If UNIQUE constraint fails, delete the old one and retry
+    db.run(`DELETE FROM refresh_tokens WHERE token = ?`, [token])
+    db.run(
+      `INSERT INTO refresh_tokens (id, user_id, token, expires_at, created_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [jti, userId, token, decoded.exp * 1000, Date.now()]
+    )
+  }
   persist()
   return token
 }
