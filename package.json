@@ -4,8 +4,8 @@
   "description": "End-to-End Real-Time Chat Application",
   "private": true,
   "scripts": {
-    "build": "npm --prefix client install && npm --prefix client run build && npm --prefix backend install",
+    "build": "npm --prefix client install --include=dev && npm --prefix client run build && npm --prefix backend install",
     "start": "npm --prefix backend start",
-    "render:build": "npm --prefix client install && npm --prefix client run build && npm --prefix backend install"
+    "render:build": "npm --prefix client install --include=dev && npm --prefix client run build && npm --prefix backend install"
   }
 }
