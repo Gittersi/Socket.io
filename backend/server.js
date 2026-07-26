@@ -56,8 +56,8 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok', ts: Date.now() })
 if (IS_PROD) {
   const clientDist = path.join(__dirname, '..', 'client', 'dist')
   app.use(express.static(clientDist))
-  // SPA fallback: any non-API route serves index.html
-  app.get('*', (_req, res) => {
+  // SPA fallback: any non-API route serves index.html (Express 5 wildcard syntax)
+  app.get('{*splat}', (_req, res) => {
     res.sendFile(path.join(clientDist, 'index.html'))
   })
 }
